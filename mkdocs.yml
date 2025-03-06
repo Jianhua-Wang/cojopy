@@ -1,0 +1,68 @@
+site_name: cojopy
+site_url: https://Jianhua-Wang.github.io/cojopy
+repo_url: https://github.com/Jianhua-Wang/cojopy
+repo_name: Jianhua-Wang/cojopy
+#strict: true
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Modules: api.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
+theme:
+  name: material
+  language: en
+  #logo: assets/logo.png
+  palette:
+    scheme: preference
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.indexes
+    - navigation.instant
+    - navigation.tabs.sticky
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.magiclink
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist
+  - admonition
+  - toc:
+      # baselevel: 2
+      permalink: true
+      # slugify: !!python/name:pymdownx.slugs.uslugify
+  - meta
+plugins:
+  - include-markdown
+  - search:
+      lang: en
+  - mkdocstrings:
+      handlers:
+      python:
+        import:
+        - https://docs.python.org/3/objects.inv
+        - https://installer.readthedocs.io/en/stable/objects.inv  # demonstration purpose in the docs
+        - https://mkdocstrings.github.io/autorefs/objects.inv
+        options:
+          docstring_style: numpy
+          docstring_options:
+            ignore_init_summary: yes
+          merge_init_into_class: yes
+          show_submodules: yes
+      # watch:
+      #   - cojopy
+extra:
+  social:
+  # to enable disqus, uncomment the following and put your disqus id below
+  # disqus: disqus_id
+# uncomment the following and put your google tracking id below to enable GA
+#google_analytics:
+  #- UA-xxx
+  #- auto
