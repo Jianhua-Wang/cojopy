@@ -42,21 +42,32 @@ def main(
 
 @app.command(name="slct", help="Conditional selection of SNPs.")
 def slct(
-    sumstats: str = typer.Argument(..., help="Path to the summary statistics file. The file should have the same columns as COJO input: SNP, A1, A2, b, se, p, freq, N"),
-    ld_matrix: str = typer.Argument(..., help="Path to the LD matrix file."),
-    ld_freq: str = typer.Option(None, "--ld-freq", "-f", help="Path to the LD frequency file. The file should have the following columns: SNP, freq. Use freq in sumstats if ld_freq is not provided."),
-    p_cutoff: float = typer.Option(5e-8, "--p-cutoff", "-p", help="P-value cutoff."),
-    collinear_cutoff: float = typer.Option(
-        0.9, "--collinear-cutoff", "-c", help="Collinearity cutoff."
+    sumstats: str = typer.Option(
+        ...,
+        "--sumstats",
+        "-s",
+        help="Path to the summary statistics file. The file should have the same columns as COJO input: SNP, A1, A2, b, se, p, freq, N",
     ),
-    window_size: int = typer.Option(
-        10000000, "--window-size", "-w", help="Window size."
-    ),
-    maf_cutoff: float = typer.Option(0.01, "--maf-cutoff", "-m", help="Minor allele frequency cutoff."),
-    diff_freq_cutoff: float = typer.Option(
-        0.05, "--diff-freq-cutoff", "-d", help="Difference in minor allele frequency cutoff."
+    ld_matrix: str = typer.Option(
+        ...,
+        "--ld-matrix",
+        "-l",
+        help="Path to the LD matrix file.",
     ),
     output: str = typer.Option(..., "--output", "-o", help="Path to the output file."),
+    ld_freq: str = typer.Option(
+        None,
+        "--ld-freq",
+        "-f",
+        help="Path to the LD frequency file. The file should have the following columns: SNP, freq. Use freq in sumstats if ld_freq is not provided.",
+    ),
+    p_cutoff: float = typer.Option(5e-8, "--p-cutoff", "-p", help="P-value cutoff."),
+    collinear_cutoff: float = typer.Option(0.9, "--collinear-cutoff", "-c", help="Collinearity cutoff."),
+    window_size: int = typer.Option(10000000, "--window-size", "-w", help="Window size."),
+    maf_cutoff: float = typer.Option(0.01, "--maf-cutoff", "-m", help="Minor allele frequency cutoff."),
+    diff_freq_cutoff: float = typer.Option(
+        0.2, "--diff-freq-cutoff", "-d", help="Difference in minor allele frequency cutoff."
+    ),
 ):
     """Perform conditional selection of SNPs using COJO algorithm."""
     c = COJO(
@@ -72,22 +83,38 @@ def slct(
 
 @app.command(name="joint", help="Joint analysis of SNPs.")
 def joint(
-    sumstats: str = typer.Argument(..., help="Path to the summary statistics file. The file should have the same columns as COJO input: SNP, A1, A2, b, se, p, freq, N"),
-    ld_matrix: str = typer.Argument(..., help="Path to the LD matrix file."),
-    ld_freq: str = typer.Option(None, "--ld-freq", "-f", help="Path to the LD frequency file. The file should have the following columns: SNP, freq. Use freq in sumstats if ld_freq is not provided."),
-    extract_snps: str = typer.Option(None, "--extract-snps", "-e", help="Path to the file containing the SNPs to extract. Each SNP should be in a new line."),
-    p_cutoff: float = typer.Option(5e-8, "--p-cutoff", "-p", help="P-value cutoff."),
-    collinear_cutoff: float = typer.Option(
-        0.9, "--collinear-cutoff", "-c", help="Collinearity cutoff."
+    sumstats: str = typer.Option(
+        ...,
+        "--sumstats",
+        "-s",
+        help="Path to the summary statistics file. The file should have the same columns as COJO input: SNP, A1, A2, b, se, p, freq, N",
     ),
-    window_size: int = typer.Option(
-        10000000, "--window-size", "-w", help="Window size."
-    ),
-    maf_cutoff: float = typer.Option(0.01, "--maf-cutoff", "-m", help="Minor allele frequency cutoff."),
-    diff_freq_cutoff: float = typer.Option(
-        0.05, "--diff-freq-cutoff", "-d", help="Difference in minor allele frequency cutoff."
+    ld_matrix: str = typer.Option(
+        ...,
+        "--ld-matrix",
+        "-l",
+        help="Path to the LD matrix file.",
     ),
     output: str = typer.Option(..., "--output", "-o", help="Path to the output file."),
+    ld_freq: str = typer.Option(
+        None,
+        "--ld-freq",
+        "-f",
+        help="Path to the LD frequency file. The file should have the following columns: SNP, freq. Use freq in sumstats if ld_freq is not provided.",
+    ),
+    extract_snps: str = typer.Option(
+        None,
+        "--extract-snps",
+        "-e",
+        help="Path to the file containing the SNPs to extract. Each SNP should be in a new line.",
+    ),
+    p_cutoff: float = typer.Option(5e-8, "--p-cutoff", "-p", help="P-value cutoff."),
+    collinear_cutoff: float = typer.Option(0.9, "--collinear-cutoff", "-c", help="Collinearity cutoff."),
+    window_size: int = typer.Option(10000000, "--window-size", "-w", help="Window size."),
+    maf_cutoff: float = typer.Option(0.01, "--maf-cutoff", "-m", help="Minor allele frequency cutoff."),
+    diff_freq_cutoff: float = typer.Option(
+        0.2, "--diff-freq-cutoff", "-d", help="Difference in minor allele frequency cutoff."
+    ),
 ):
     """Perform joint analysis of SNPs using COJO algorithm."""
     logger = logging.getLogger("COJO")
@@ -101,6 +128,63 @@ def joint(
     joint_result = c.run_joint_analysis(sumstats, ld_matrix, extract_snps, ld_freq)
     logger.info("Joint analysis complete. Writing results to %s", output)
     joint_result.to_csv(output, sep="\t", index=False, float_format="%.6g")
+
+
+@app.command(name="cond", help="Conditional analysis of SNPs.")
+def cond(
+    sumstats: str = typer.Option(
+        ...,
+        "--sumstats",
+        "-s",
+        help="Path to the summary statistics file. The file should have the same columns as COJO input: SNP, A1, A2, b, se, p, freq, N",
+    ),
+    ld_matrix: str = typer.Option(
+        ...,
+        "--ld-matrix",
+        "-l",
+        help="Path to the LD matrix file.",
+    ),
+    output: str = typer.Option(..., "--output", "-o", help="Path to the output file."),
+
+    cond_snps: str = typer.Option(
+        ...,
+        "--cond-snps",
+        "-c",
+        help="Path to the file containing the SNPs to condition on. Each SNP should be in a new line.",
+    ),
+    extract_snps: str = typer.Option(
+        None,
+        "--extract-snps",
+        "-e",
+        help="Path to the file containing the SNPs to extract. Each SNP should be in a new line.",
+    ),
+    ld_freq: str = typer.Option(
+        None,
+        "--ld-freq",
+        "-f",
+        help="Path to the LD frequency file. The file should have the following columns: SNP, freq. Use freq in sumstats if ld_freq is not provided.",
+    ),
+    p_cutoff: float = typer.Option(5e-8, "--p-cutoff", "-p", help="P-value cutoff."),
+    collinear_cutoff: float = typer.Option(0.9, "--collinear-cutoff", "-c", help="Collinearity cutoff."),
+    window_size: int = typer.Option(10000000, "--window-size", "-w", help="Window size."),
+    maf_cutoff: float = typer.Option(0.01, "--maf-cutoff", "-m", help="Minor allele frequency cutoff."),
+    diff_freq_cutoff: float = typer.Option(
+        0.2, "--diff-freq-cutoff", "-d", help="Difference in minor allele frequency cutoff."
+    ),
+):
+    """Perform conditional analysis of SNPs using COJO algorithm."""
+    logger = logging.getLogger("COJO")
+    c = COJO(
+        p_cutoff=p_cutoff,
+        collinear_cutoff=collinear_cutoff,
+        window_size=window_size,
+        maf_cutoff=maf_cutoff,
+        diff_freq_cutoff=diff_freq_cutoff,
+    )
+    cond_result = c.run_conditional_analysis(sumstats, ld_matrix, cond_snps, extract_snps, ld_freq)
+    logger.info("Conditional analysis complete. Writing results to %s", output)
+    cond_result.to_csv(output, sep="\t", index=False, float_format="%.6g")
+
 
 if __name__ == "__main__":
     app(main)

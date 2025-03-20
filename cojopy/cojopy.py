@@ -17,7 +17,7 @@ class COJO:
         collinear_cutoff: float = 0.9,
         window_size: int = 10000000,
         maf_cutoff: float = 0.01,
-        diff_freq_cutoff: float = 0.05,
+        diff_freq_cutoff: float = 0.2,
     ):
         """Initialize the COJO analysis parameters.
 
@@ -88,6 +88,7 @@ class COJO:
             self.logger.info("Filtering SNPs based on difference in frequency: %d SNPs removed", np.sum(~freq_diff_mask))
             self.sumstats = self.sumstats[freq_diff_mask]
             self.ld_matrix = self.ld_matrix[freq_diff_mask, :][:, freq_diff_mask]
+            self.ld_freq = self.ld_freq[freq_diff_mask]
         else:
             self.ld_freq = self.sumstats["freq"].values
             self.logger.info("Using freq in sumstats as LD frequency")
@@ -277,8 +278,6 @@ class COJO:
         beta_unselected = self.original_beta[unselected_indices]
         se_selected = self.original_se[selected_indices]
         se_unselected = self.original_se[unselected_indices]
-        n_selected = self.n[selected_indices]
-        n_unselected = self.n[unselected_indices]
         freq_selected = self.sumstats["freq"].values[selected_indices]
         freq_unselected = self.sumstats["freq"].values[unselected_indices]
 
@@ -428,6 +427,35 @@ class COJO:
                 "joint_p": joint_pvals,
             }
         )
+
+    def run_conditional_analysis(self, sumstats_path: str, ld_path: str, cond_snps_path: str, extract_snps_path: Optional[str] = None, ld_freq_path: Optional[str] = None):
+        """Run conditional analysis for all selected SNPs."""
+        self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
+        cond_snps = []
+        with open(cond_snps_path, "r") as f:
+            for line in f:
+                cond_snps.append(line.strip())
+        self.logger.info("Extracting SNPs from %s", cond_snps_path)
+        self.selected_mask = np.isin(self.snp_ids, cond_snps)  # type: ignore
+        cond_betas, cond_ses, cond_pvals = self._calculate_conditional_stats()
+        cond_result = pd.DataFrame(
+            {
+                "SNP": self.snp_ids[~self.selected_mask],
+                "original_beta": self.original_beta[~self.selected_mask],
+                "original_se": self.original_se[~self.selected_mask],
+                "original_p": self.original_p[~self.selected_mask],
+                "cond_beta": cond_betas[~self.selected_mask],
+                "cond_se": cond_ses[~self.selected_mask],
+                "cond_p": cond_pvals[~self.selected_mask],
+            }
+        )
+        if extract_snps_path is not None:
+            extract_snps = []
+            with open(extract_snps_path, "r") as f:
+                for line in f:
+                    extract_snps.append(line.strip())
+            cond_result = cond_result[cond_result["SNP"].isin(extract_snps)]
+        return cond_result
 
     def _check_collinearity(self, new_snp_idx):
         """Check for collinearity between the new SNP and already selected SNPs.
