@@ -48,7 +48,9 @@ class COJO:
         # Set up logging
         self.logger = logging.getLogger("COJO")
 
-    def load_sumstats(self, sumstats_path: str, ld_path: str, ld_freq_path: Optional[str] = None):
+    def load_sumstats(
+        self, sumstats_path: str, ld_path: str, ld_freq_path: Optional[str] = None
+    ):
         """
         Load summary statistics and LD matrix.
 
@@ -58,7 +60,7 @@ class COJO:
             Path to the summary statistics file
             The file should have the same columns as COJO input: SNP, A1, A2, b, se, p, freq, N
         ld_path : str
-            Path to the LD matrix file
+            Path to the LD matrix file, the allele order should be the same as in sumstats.
         ld_freq_path : str, optional
             Path to the LD frequency file. The file should have the following columns: SNP, freq
             Use freq in sumstats if ld_freq_path is not provided.
@@ -68,7 +70,9 @@ class COJO:
         self.ld_matrix = np.loadtxt(ld_path)
 
         if self.sumstats.shape[0] != self.ld_matrix.shape[0]:
-            raise ValueError("Number of SNPs in summary statistics and LD matrix do not match")
+            raise ValueError(
+                "Number of SNPs in summary statistics and LD matrix do not match"
+            )
 
         required_columns = ["SNP", "A1", "A2", "b", "se", "p", "freq", "N"]
         for col in required_columns:
@@ -76,16 +80,24 @@ class COJO:
                 raise ValueError(f"Column {col} not found in summary statistics file")
 
         # Filter SNPs based on MAF cutoff, delete those SNPs both in sumstats and ld_matrix
-        maf_mask = (self.sumstats["freq"] >= self.maf_cutoff) & (self.sumstats["freq"] <= 1 - self.maf_cutoff)
-        self.logger.info("Filtering SNPs based on MAF cutoff: %d SNPs removed", np.sum(~maf_mask))
+        maf_mask = (self.sumstats["freq"] >= self.maf_cutoff) & (
+            self.sumstats["freq"] <= 1 - self.maf_cutoff
+        )
+        self.logger.info(
+            "Filtering SNPs based on MAF cutoff: %d SNPs removed", np.sum(~maf_mask)
+        )
         self.sumstats = self.sumstats[maf_mask]
         self.ld_matrix = self.ld_matrix[maf_mask, :][:, maf_mask]
 
         if ld_freq_path is not None:
             self.ld_freq = pd.read_csv(ld_freq_path, sep="\t")["freq"].values
+            self.ld_freq = self.ld_freq[maf_mask]
             freq_diff = np.abs(self.sumstats["freq"].values - self.ld_freq)  # type: ignore
             freq_diff_mask = freq_diff < self.diff_freq_cutoff
-            self.logger.info("Filtering SNPs based on difference in frequency: %d SNPs removed", np.sum(~freq_diff_mask))
+            self.logger.info(
+                "Filtering SNPs based on difference in frequency: %d SNPs removed",
+                np.sum(~freq_diff_mask),
+            )
             self.sumstats = self.sumstats[freq_diff_mask]
             self.ld_matrix = self.ld_matrix[freq_diff_mask, :][:, freq_diff_mask]
             self.ld_freq = self.ld_freq[freq_diff_mask]
@@ -146,15 +158,21 @@ class COJO:
         self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
 
         # Create masks for different operations
-        self.selected_mask = np.zeros(self.total_snps, dtype=bool)  # Mask for selected SNPs
-        self.available_mask = np.ones(self.total_snps, dtype=bool)  # Mask for available SNPs
+        self.selected_mask = np.zeros(
+            self.total_snps, dtype=bool
+        )  # Mask for selected SNPs
+        self.available_mask = np.ones(
+            self.total_snps, dtype=bool
+        )  # Mask for available SNPs
 
         self.logger.info("Analyzing %d SNPs", self.total_snps)
 
         # Start with the most significant SNP
         min_p_idx = np.argmin(self.p)  # type: ignore
         if self.p[min_p_idx] > self.p_cutoff:
-            self.logger.info("No significant SNPs found (minimum p-value: %g)", self.p[min_p_idx])
+            self.logger.info(
+                "No significant SNPs found (minimum p-value: %g)", self.p[min_p_idx]
+            )
             return pd.DataFrame()  # No significant SNPs
 
         # Select the first SNP
@@ -171,7 +189,9 @@ class COJO:
         continue_selection = True
         iteration = 2
         while continue_selection:
-            self.logger.info("Iteration %d: Calculating conditional statistics", iteration)
+            self.logger.info(
+                "Iteration %d: Calculating conditional statistics", iteration
+            )
             # Calculate conditional p-values for remaining SNPs
             cond_betas, cond_ses, cond_pvals = self._calculate_conditional_stats()
 
@@ -240,12 +260,13 @@ class COJO:
             joint_betas, joint_ses, joint_pvals = self._calculate_joint_stats()
 
             # Prepare results
+            ordered_snps = sorted(self.snps_selected)
             result = pd.DataFrame(
                 {
-                    "SNP": [self.snp_ids[i] for i in self.snps_selected],
-                    "original_beta": [self.original_beta[i] for i in self.snps_selected],
-                    "original_se": [self.original_se[i] for i in self.snps_selected],
-                    "original_p": [self.original_p[i] for i in self.snps_selected],
+                    "SNP": [self.snp_ids[i] for i in ordered_snps],
+                    "original_beta": [self.original_beta[i] for i in ordered_snps],
+                    "original_se": [self.original_se[i] for i in ordered_snps],
+                    "original_p": [self.original_p[i] for i in ordered_snps],
                     "joint_beta": joint_betas,
                     "joint_se": joint_ses,
                     "joint_p": joint_pvals,
@@ -256,8 +277,12 @@ class COJO:
                 "COJO analysis complete. Selected %d independent SNPs.",
                 len(self.snps_selected),
             )
-            self.logger.info("Filtered %d SNPs due to collinearity.", self.collinear_filtered)
-            self.logger.info("Removed %d SNPs during backward elimination.", self.backward_removed)
+            self.logger.info(
+                "Filtered %d SNPs due to collinearity.", self.collinear_filtered
+            )
+            self.logger.info(
+                "Removed %d SNPs during backward elimination.", self.backward_removed
+            )
 
             return result
         else:
@@ -265,7 +290,7 @@ class COJO:
             return pd.DataFrame()
 
     def _calculate_conditional_stats(self):
-        """Calculate conditional statistics for all SNPs given the currently selected SNPs using the improved implementation from Yang et al. (2012)."""
+        """Conditional analysis using LD matrix."""
         if sum(self.selected_mask) == 0:
             return self.original_beta, self.original_se, self.original_p
 
@@ -285,8 +310,12 @@ class COJO:
         pheno_var = self.pheno_var
 
         # Calculate effective sample sizes
-        eff_n_selected = self._cal_effective_n(pheno_var, beta_selected, se_selected, freq_selected)
-        eff_n_unselected = self._cal_effective_n(pheno_var, beta_unselected, se_unselected, freq_unselected)
+        eff_n_selected = self._cal_effective_n(
+            pheno_var, beta_selected, se_selected, freq_selected
+        )
+        eff_n_unselected = self._cal_effective_n(
+            pheno_var, beta_unselected, se_unselected, freq_unselected
+        )
 
         # Compute genotype variances
         var_x_selected = 2 * freq_selected * (1 - freq_selected)
@@ -342,8 +371,17 @@ class COJO:
             cond_beta[idx] = beta_unselected[i] - adjustment
 
             # Calculate conditional standard error
-            cond_se[idx] = np.sqrt(pheno_var / D2.diagonal()[i])
-
+            with np.errstate(invalid="ignore"):
+                cond_se[idx] = np.sqrt(pheno_var / D2.diagonal()[i])
+            self.logger.debug(f"SNP: {self.snp_ids[idx]}")
+            self.logger.debug(f"bC: {cond_beta[idx]}")
+            self.logger.debug(f"seC: {cond_se[idx]}")
+            self.logger.debug(f"_Z_N.col(j): {C}")
+            self.logger.debug(f"_B_N_i: {B1_inv}")
+            self.logger.debug(f"Z_Bi: {Z_Bi}")
+            self.logger.debug(f"_D_N: {D1.diagonal()}")
+            self.logger.debug(f"B2: {D2.diagonal()[i]}")
+            self.logger.debug(f"_Nd[j]: {eff_n_unselected[i]}")
             # Calculate p-value
             if cond_se[idx] < np.inf:
                 cond_p[idx] = self._calculate_p_value(cond_beta[idx], cond_se[idx])
@@ -351,15 +389,18 @@ class COJO:
                 cond_p[idx] = 1.0
 
             self.logger.debug(
-                f"SNP {self.snp_ids[idx]} has p-value {cond_p[idx]:.2e}, beta {cond_beta[idx]:.5f}, se {cond_se[idx]:.5f}"
+                f"SNP {self.snp_ids[idx]} has p-value {cond_p[idx]:.2e}, "
+                f"beta {cond_beta[idx]:.5f}, se {cond_se[idx]:.5f}"
             )
 
         return cond_beta, cond_se, cond_p
 
     def _calculate_joint_stats(self):
-        """Calculate joint statistics for all selected SNPs using the improved implementation from Yang et al. (2012)."""
+        """Joint analysis using LD matrix."""
         selected_indices = np.where(self.selected_mask)[0]
-        self.logger.info("Calculating joint statistics for %d SNPs", len(selected_indices))
+        self.logger.info(
+            "Calculating joint statistics for %d SNPs", len(selected_indices)
+        )
         n_snp = len(selected_indices)
 
         # Extract relevant data for selected SNPs
@@ -369,7 +410,9 @@ class COJO:
         ld_selected = self.ld_matrix[np.ix_(selected_indices, selected_indices)]
 
         # Calculate effective sample sizes
-        eff_n = self._cal_effective_n(self.pheno_var, beta_selected, se_selected, freq_selected)
+        eff_n = self._cal_effective_n(
+            self.pheno_var, beta_selected, se_selected, freq_selected
+        )
 
         # Construct D matrix (diagonal)
         var_x = 2 * freq_selected * (1 - freq_selected)
@@ -382,7 +425,11 @@ class COJO:
                 if j == k:
                     XTX[j, k] = eff_n[j] * var_x[j]
                 else:
-                    XTX[j, k] = min(eff_n[j], eff_n[k]) * ld_selected[j, k] * np.sqrt(var_x[j] * var_x[k])
+                    XTX[j, k] = (
+                        min(eff_n[j], eff_n[k])
+                        * ld_selected[j, k]
+                        * np.sqrt(var_x[j] * var_x[k])
+                    )
 
         # Compute joint effects
         try:
@@ -398,12 +445,25 @@ class COJO:
         var_joint = self.pheno_var * XTX_inv.diagonal()
         joint_ses = np.sqrt(var_joint)
 
+        self.logger.debug(f"joint_betas: {joint_betas}")
+        self.logger.debug(f"joint_ses: {joint_ses}")
+        self.logger.debug(f"_jma_Ve: {self.pheno_var}")
+        self.logger.debug(f"LD matrix: {ld_selected}")
+        self.logger.debug(f"_B_N_i.diagonal(): {XTX_inv.diagonal()}")
+        self.logger.debug(f"_D_N: {D.diagonal()}")
+        self.logger.debug(f"_B_N_i: {XTX_inv}")
         # Calculate p-values
         joint_pvals = self._calculate_p_value(joint_betas, joint_ses)
 
         return joint_betas, joint_ses, joint_pvals
 
-    def run_joint_analysis(self, sumstats_path: str, ld_path: str, extract_snps_path: Optional[str] = None, ld_freq_path: Optional[str] = None):
+    def run_joint_analysis(
+        self,
+        sumstats_path: str,
+        ld_path: str,
+        extract_snps_path: Optional[str] = None,
+        ld_freq_path: Optional[str] = None,
+    ):
         """Run joint analysis for all selected SNPs."""
         self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
         if extract_snps_path is not None:
@@ -428,7 +488,14 @@ class COJO:
             }
         )
 
-    def run_conditional_analysis(self, sumstats_path: str, ld_path: str, cond_snps_path: str, extract_snps_path: Optional[str] = None, ld_freq_path: Optional[str] = None):
+    def run_conditional_analysis(
+        self,
+        sumstats_path: str,
+        ld_path: str,
+        cond_snps_path: str,
+        extract_snps_path: Optional[str] = None,
+        ld_freq_path: Optional[str] = None,
+    ):
         """Run conditional analysis for all selected SNPs."""
         self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
         cond_snps = []
@@ -496,7 +563,9 @@ class COJO:
             max_r2 = np.max(ld_subset**2)
 
             max_r2_idx = selected_indices[np.argmax(ld_subset**2)]
-            self.logger.debug("Max r² = %g with SNP %s", max_r2, self.snp_ids[max_r2_idx])
+            self.logger.debug(
+                "Max r² = %g with SNP %s", max_r2, self.snp_ids[max_r2_idx]
+            )
 
         return max_r2 < self.collinear_cutoff
 
@@ -512,7 +581,9 @@ class COJO:
         to_remove = []
         for i, idx in enumerate(self.snps_selected):
             if joint_pvals[i] > self.p_cutoff:
-                to_remove.append((idx, i))  # Store both original index and position in selected list
+                to_remove.append(
+                    (idx, i)
+                )  # Store both original index and position in selected list
                 self.logger.info(
                     "SNP %s no longer significant in joint model (p-value: %g)",
                     self.snp_ids[idx],
@@ -532,13 +603,17 @@ class COJO:
         log_p = np.log(2) + log_sf
         return np.exp(log_p)
 
-    def _cal_pheno_var(self, freq: np.ndarray, beta: np.ndarray, se: np.ndarray, n: np.ndarray) -> np.float64:
+    def _cal_pheno_var(
+        self, freq: np.ndarray, beta: np.ndarray, se: np.ndarray, n: np.ndarray
+    ) -> np.float64:
         """Calculate the phenotype variance using Equation (8) from Yang et al. (2012)."""
         var_x = 2 * freq * (1 - freq)
         Vp_buf = var_x * n * se**2 + var_x * beta**2 * n / (n - 1)
         return np.median(Vp_buf)
 
-    def _cal_effective_n(self, pheno_var: np.float64, beta: np.ndarray, se: np.ndarray, freq: np.ndarray) -> np.ndarray:
+    def _cal_effective_n(
+        self, pheno_var: np.float64, beta: np.ndarray, se: np.ndarray, freq: np.ndarray
+    ) -> np.ndarray:
         """Calculate the effective sample size using Equation (13) from Yang et al. (2012)."""
         var_x = 2 * freq * (1 - freq)
         eff_n = (pheno_var - var_x * beta**2) / (var_x * se**2) + 1

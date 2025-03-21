@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.0] (2025-03-21)
+
+* Added `extract-snps` option for `joint` and `cond` commands.
+* Added `ld-freq` option for `joint` and `cond` commands.
+* Added `p-cutoff` option for `joint` and `cond` commands.
+* Added `collinear-cutoff` option for `joint` and `cond` commands.
+* Added `maf-cutoff` option for `joint` and `cond` commands.
+* Added `diff-freq-cutoff` option for `joint` and `cond` commands.
+* Wrote README.md.
+
 ## [0.0.4] (2025-03-20)
 
 * Added tests for conditional selection and joint analysis.

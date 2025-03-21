@@ -104,7 +104,9 @@ def test_cli_slct_command_with_ld_freq(temp_files, sample_sumstats):
     """Test CLI slct command with LD frequency file."""
     # Create LD frequency file with small differences
     ld_freq_path = os.path.join(temp_files["temp_dir"], "ld_freq.txt")
-    ld_freq = pd.DataFrame({"SNP": sample_sumstats["SNP"], "freq": [0.31, 0.41, 0.51, 0.61]})
+    ld_freq = pd.DataFrame(
+        {"SNP": sample_sumstats["SNP"], "freq": [0.31, 0.41, 0.51, 0.61]}
+    )
     ld_freq.to_csv(ld_freq_path, sep="\t", index=False)
 
     result = runner.invoke(
