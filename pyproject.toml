@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "cojopy"
-version = "0.0.4"
+version = "0.1.0"
 homepage = "https://github.com/Jianhua-Wang/cojopy"
 description = "Conditional Analysis with LD Matrix."
 authors = ["Jianhua Wang <jianhua.mert@gmail.com>"]
