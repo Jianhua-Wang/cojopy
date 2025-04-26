@@ -56,7 +56,7 @@ class COJO:
         ld_freq_path: Optional[str] = None,
         sumstats: Optional[pd.DataFrame] = None,
         ld_matrix: Optional[np.ndarray] = None,
-        ld_freq: Optional[np.ndarray] = None,
+        ld_freq: Optional[pd.DataFrame] = None,
     ):
         """
         Load summary statistics and LD matrix.
@@ -71,6 +71,12 @@ class COJO:
         ld_freq_path : str, optional
             Path to the LD frequency file. The file should have the following columns: SNP, freq
             Use freq in sumstats if ld_freq_path is not provided.
+        sumstats : pandas.DataFrame, optional
+            Summary statistics DataFrame
+        ld_matrix : numpy.ndarray, optional
+            LD matrix
+        ld_freq : pandas.DataFrame, optional
+            LD frequency DataFrame
         """
         self.logger.info("Loading summary statistics and LD matrix")
         if sumstats is not None:
@@ -86,7 +92,7 @@ class COJO:
         else:
             raise ValueError("Either ld_matrix or ld_path must be provided")
         if ld_freq is not None:
-            self.ld_freq = ld_freq
+            self.ld_freq = ld_freq["freq"].values
         elif ld_freq_path is not None:
             self.ld_freq = pd.read_csv(ld_freq_path, sep="\t")["freq"].values
         else:

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] (2025-04-25)
+
+* `load_sumstats` supports loading ld_freq from a pandas DataFrame.
+
 ## [0.1.1] (2025-04-25)
 
 * `load_sumstats` supports loading sumstats, ld_matrix, and ld_freq from files or from pandas DataFrames.
