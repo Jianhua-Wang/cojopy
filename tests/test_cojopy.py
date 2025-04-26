@@ -174,9 +174,8 @@ def test_conditional_selection_no_significant_snps(temp_files):
     sumstats.to_csv(temp_files["sumstats_path"], sep="\t", index=False)
 
     cojo = COJO(p_cutoff=1e-8)
-    result = cojo.conditional_selection(
-        temp_files["sumstats_path"], temp_files["ld_path"]
-    )
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
+    result = cojo.conditional_selection()
 
     assert result.empty
     assert len(cojo.snps_selected) == 0
@@ -185,9 +184,8 @@ def test_conditional_selection_no_significant_snps(temp_files):
 def test_conditional_selection_single_snp(temp_files):
     """Test conditional selection with only one significant SNP."""
     cojo = COJO(p_cutoff=1e-7)
-    result = cojo.conditional_selection(
-        temp_files["sumstats_path"], temp_files["ld_path"]
-    )
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
+    result = cojo.conditional_selection()
 
     assert len(result) == 1
     assert result["SNP"].iloc[0] == "rs1"
@@ -209,9 +207,8 @@ def test_conditional_selection_with_collinearity(temp_files):
     sumstats.to_csv(temp_files["sumstats_path"], sep="\t", index=False)
 
     cojo = COJO(p_cutoff=1e-7, collinear_cutoff=0.9)
-    result = cojo.conditional_selection(
-        temp_files["sumstats_path"], temp_files["ld_path"]
-    )
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
+    result = cojo.conditional_selection()
 
     assert len(result) == 1  # Only one SNP should be selected due to collinearity
 
@@ -219,9 +216,8 @@ def test_conditional_selection_with_collinearity(temp_files):
 def test_conditional_selection_with_window(temp_files, sample_positions):
     """Test conditional selection with window-based LD consideration."""
     cojo = COJO(p_cutoff=1e-7, window_size=1000)
-    result = cojo.conditional_selection(
-        temp_files["sumstats_path"], temp_files["ld_path"], positions=sample_positions
-    )
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
+    result = cojo.conditional_selection()
 
     assert len(result) > 0
     # SNPs should only be considered for LD if they're within the window
@@ -242,9 +238,8 @@ def test_backward_elimination(temp_files):
     sumstats.to_csv(temp_files["sumstats_path"], sep="\t", index=False)
 
     cojo = COJO(p_cutoff=1e-7)
-    result = cojo.conditional_selection(
-        temp_files["sumstats_path"], temp_files["ld_path"]
-    )
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
+    result = cojo.conditional_selection()
 
     assert len(result) == 1  # Only the most significant SNP should remain
 
@@ -258,9 +253,8 @@ def test_joint_statistics_calculation(temp_files):
     np.savetxt(temp_files["ld_path"], ld_matrix)
 
     cojo = COJO(p_cutoff=1e-7)
-    result = cojo.conditional_selection(
-        temp_files["sumstats_path"], temp_files["ld_path"]
-    )
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
+    result = cojo.conditional_selection()
 
     assert "joint_beta" in result.columns
     assert "joint_se" in result.columns
@@ -283,8 +277,9 @@ def test_run_conditional_analysis(temp_files):
         f.write("rs1\nrs2\n")
 
     cojo = COJO()
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
     result = cojo.run_conditional_analysis(
-        temp_files["sumstats_path"], temp_files["ld_path"], cond_snps_path
+        cond_snps_path=cond_snps_path,
     )
 
     assert len(result) == 2  # Should only include SNPs not in cond_snps
@@ -306,10 +301,9 @@ def test_run_conditional_analysis_with_extract(temp_files):
         f.write("rs3\n")
 
     cojo = COJO()
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
     result = cojo.run_conditional_analysis(
-        temp_files["sumstats_path"],
-        temp_files["ld_path"],
-        cond_snps_path,
+        cond_snps_path=cond_snps_path,
         extract_snps_path=extract_snps_path,
     )
 
@@ -325,9 +319,8 @@ def test_run_joint_analysis(temp_files):
         f.write("rs1\nrs2\n")
 
     cojo = COJO()
+    cojo.load_sumstats(temp_files["sumstats_path"], temp_files["ld_path"])
     result = cojo.run_joint_analysis(
-        temp_files["sumstats_path"],
-        temp_files["ld_path"],
         extract_snps_path=extract_snps_path,
     )
 

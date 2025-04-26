@@ -93,7 +93,8 @@ def slct(
         maf_cutoff=maf_cutoff,
         diff_freq_cutoff=diff_freq_cutoff,
     )
-    cojo_result = c.conditional_selection(sumstats, ld_matrix, ld_freq)
+    c.load_sumstats(sumstats, ld_matrix, ld_freq)
+    cojo_result = c.conditional_selection()
     logger.info("Conditional selection complete. Writing results to %s", output)
     cojo_result.to_csv(output, sep="\t", index=False, float_format="%.6g")
 
@@ -160,7 +161,8 @@ def joint(
         maf_cutoff=maf_cutoff,
         diff_freq_cutoff=diff_freq_cutoff,
     )
-    joint_result = c.run_joint_analysis(sumstats, ld_matrix, extract_snps, ld_freq)
+    c.load_sumstats(sumstats, ld_matrix, ld_freq)
+    joint_result = c.run_joint_analysis(extract_snps)
     logger.info("Joint analysis complete. Writing results to %s", output)
     joint_result.to_csv(output, sep="\t", index=False, float_format="%.6g")
 
@@ -233,9 +235,8 @@ def cond(
         maf_cutoff=maf_cutoff,
         diff_freq_cutoff=diff_freq_cutoff,
     )
-    cond_result = c.run_conditional_analysis(
-        sumstats, ld_matrix, cond_snps, extract_snps, ld_freq
-    )
+    c.load_sumstats(sumstats, ld_matrix, ld_freq)
+    cond_result = c.run_conditional_analysis(cond_snps, extract_snps)
     logger.info("Conditional analysis complete. Writing results to %s", output)
     cond_result.to_csv(output, sep="\t", index=False, float_format="%.6g")
 

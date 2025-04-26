@@ -44,12 +44,19 @@ class COJO:
         self.collinear_filtered = 0
         self.maf_cutoff = maf_cutoff
         self.diff_freq_cutoff = diff_freq_cutoff
+        self.backward_removed_snps = set()  # type: ignore
 
         # Set up logging
         self.logger = logging.getLogger("COJO")
 
     def load_sumstats(
-        self, sumstats_path: str, ld_path: str, ld_freq_path: Optional[str] = None
+        self,
+        sumstats_path: Optional[str] = None,
+        ld_path: Optional[str] = None,
+        ld_freq_path: Optional[str] = None,
+        sumstats: Optional[pd.DataFrame] = None,
+        ld_matrix: Optional[np.ndarray] = None,
+        ld_freq: Optional[np.ndarray] = None,
     ):
         """
         Load summary statistics and LD matrix.
@@ -66,8 +73,24 @@ class COJO:
             Use freq in sumstats if ld_freq_path is not provided.
         """
         self.logger.info("Loading summary statistics and LD matrix")
-        self.sumstats = pd.read_csv(sumstats_path, sep="\t")
-        self.ld_matrix = np.loadtxt(ld_path)
+        if sumstats is not None:
+            self.sumstats = sumstats
+        elif sumstats_path is not None:
+            self.sumstats = pd.read_csv(sumstats_path, sep="\t")
+        else:
+            raise ValueError("Either sumstats or sumstats_path must be provided")
+        if ld_matrix is not None:
+            self.ld_matrix = ld_matrix
+        elif ld_path is not None:
+            self.ld_matrix = np.loadtxt(ld_path)
+        else:
+            raise ValueError("Either ld_matrix or ld_path must be provided")
+        if ld_freq is not None:
+            self.ld_freq = ld_freq
+        elif ld_freq_path is not None:
+            self.ld_freq = pd.read_csv(ld_freq_path, sep="\t")["freq"].values
+        else:
+            self.ld_freq = None  # type: ignore
 
         if self.sumstats.shape[0] != self.ld_matrix.shape[0]:
             raise ValueError(
@@ -89,8 +112,7 @@ class COJO:
         self.sumstats = self.sumstats[maf_mask]
         self.ld_matrix = self.ld_matrix[maf_mask, :][:, maf_mask]
 
-        if ld_freq_path is not None:
-            self.ld_freq = pd.read_csv(ld_freq_path, sep="\t")["freq"].values
+        if self.ld_freq is not None:
             self.ld_freq = self.ld_freq[maf_mask]
             freq_diff = np.abs(self.sumstats["freq"].values - self.ld_freq)  # type: ignore
             freq_diff_mask = freq_diff < self.diff_freq_cutoff
@@ -127,9 +149,9 @@ class COJO:
 
     def conditional_selection(
         self,
-        sumstats_path: str,
-        ld_path: str,
-        ld_freq_path: Optional[str] = None,
+        # sumstats_path: str,
+        # ld_path: str,
+        # ld_freq_path: Optional[str] = None,
         positions: Union[pd.Series, None] = None,
     ) -> pd.DataFrame:
         """
@@ -155,7 +177,9 @@ class COJO:
             self.collinear_cutoff,
         )
 
-        self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
+        if self.sumstats is None:
+            raise ValueError("Sumstats not loaded")
+        # self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
 
         # Create masks for different operations
         self.selected_mask = np.zeros(
@@ -195,7 +219,6 @@ class COJO:
             # Calculate conditional p-values for remaining SNPs
             cond_betas, cond_ses, cond_pvals = self._calculate_conditional_stats()
 
-            # Find the most significant SNP that passes the threshold
             available_indices = np.where(self.available_mask)[0]
             if len(available_indices) == 0:
                 self.logger.info("No more available SNPs to test")
@@ -203,6 +226,14 @@ class COJO:
 
             cond_p_subset = cond_pvals[available_indices]
             min_cond_p_idx = available_indices[np.argmin(cond_p_subset)]
+
+            # Check if this SNP was previously removed by backward elimination
+            if self.snp_ids[min_cond_p_idx] in self.backward_removed_snps:
+                self.logger.info(
+                    "SNP %s was previously removed by backward elimination. Stopping selection.",
+                    self.snp_ids[min_cond_p_idx],
+                )
+                break
 
             if cond_pvals[min_cond_p_idx] < self.p_cutoff:
                 self.logger.info(
@@ -459,13 +490,15 @@ class COJO:
 
     def run_joint_analysis(
         self,
-        sumstats_path: str,
-        ld_path: str,
+        # sumstats_path: str,
+        # ld_path: str,
         extract_snps_path: Optional[str] = None,
-        ld_freq_path: Optional[str] = None,
+        # ld_freq_path: Optional[str] = None,
     ):
         """Run joint analysis for all selected SNPs."""
-        self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
+        if self.sumstats is None:
+            raise ValueError("Sumstats not loaded")
+        # self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
         if extract_snps_path is not None:
             extract_snps = []
             with open(extract_snps_path, "r") as f:
@@ -490,14 +523,16 @@ class COJO:
 
     def run_conditional_analysis(
         self,
-        sumstats_path: str,
-        ld_path: str,
+        # sumstats_path: str,
+        # ld_path: str,
         cond_snps_path: str,
         extract_snps_path: Optional[str] = None,
-        ld_freq_path: Optional[str] = None,
+        # ld_freq_path: Optional[str] = None,
     ):
         """Run conditional analysis for all selected SNPs."""
-        self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
+        if self.sumstats is None:
+            raise ValueError("Sumstats not loaded")
+        # self.load_sumstats(sumstats_path, ld_path, ld_freq_path)
         cond_snps = []
         with open(cond_snps_path, "r") as f:
             for line in f:
@@ -574,7 +609,6 @@ class COJO:
         if len(self.snps_selected) <= 1:
             return
 
-        # Calculate joint statistics
         joint_betas, joint_ses, joint_pvals = self._calculate_joint_stats()
 
         # Find SNPs that are no longer significant
@@ -596,6 +630,7 @@ class COJO:
             self.available_mask[idx] = True  # Make it available again
             self.snps_selected.pop(pos)
             self.backward_removed += 1
+            self.backward_removed_snps.add(self.snp_ids[idx])  # Add SNP to removed set
 
     def _calculate_p_value(self, beta: np.ndarray, se: np.ndarray) -> np.ndarray:
         z_scores = beta / se

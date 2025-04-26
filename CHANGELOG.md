@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.1] (2025-04-25)
+
+* `load_sumstats` supports loading sumstats, ld_matrix, and ld_freq from files or from pandas DataFrames.
+
 ## [0.1.0] (2025-03-21)
 
 * Added `extract-snps` option for `joint` and `cond` commands.
