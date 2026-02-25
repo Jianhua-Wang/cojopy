@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] (2026-02-25)
+
+* Migrated from Poetry to uv with hatchling build backend.
+* Relaxed typer dependency version constraint.
+* Fixed tox configuration for PEP 621 compatibility.
+
 ## [0.1.2] (2025-04-25)
 
 * `load_sumstats` supports loading ld_freq from a pandas DataFrame.
