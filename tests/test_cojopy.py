@@ -362,7 +362,9 @@ def test_load_sumstats_with_dataframes():
 def test_load_sumstats_missing_sumstats():
     """Test load_sumstats raises ValueError when no sumstats provided (line 87)."""
     cojo = COJO()
-    with pytest.raises(ValueError, match="Either sumstats or sumstats_path must be provided"):
+    with pytest.raises(
+        ValueError, match="Either sumstats or sumstats_path must be provided"
+    ):
         cojo.load_sumstats(ld_path="/tmp/fake_ld.txt")
 
 
@@ -381,7 +383,9 @@ def test_load_sumstats_missing_ld_matrix():
         }
     )
     cojo = COJO()
-    with pytest.raises(ValueError, match="Either ld_matrix or ld_path must be provided"):
+    with pytest.raises(
+        ValueError, match="Either ld_matrix or ld_path must be provided"
+    ):
         cojo.load_sumstats(sumstats=sumstats)
 
 
@@ -431,12 +435,12 @@ def test_load_sumstats_missing_column():
 
 
 def _make_multi_snp_data(n_snps=6):
-    """Helper to create data where multiple SNPs can be selected."""
+    """Create data where multiple SNPs can be selected."""
     np.random.seed(42)
     # Create SNPs with very low p-values and distinct beta values
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.8, 0.6, 0.7, 0.05, 0.04, 0.03],
@@ -492,7 +496,7 @@ def test_conditional_selection_collinearity_filtering():
 
     cojo = COJO(p_cutoff=1e-6, collinear_cutoff=0.9)
     cojo.load_sumstats(sumstats=sumstats, ld_matrix=ld)
-    result = cojo.conditional_selection()
+    cojo.conditional_selection()
 
     assert cojo.collinear_filtered > 0
 
@@ -511,7 +515,7 @@ def test_conditional_selection_all_snps_exhausted():
     n_snps = 3
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.8, 0.7, 0.6],
@@ -540,7 +544,7 @@ def test_conditional_selection_backward_removed_blocks_reselection():
     n_snps = 4
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.8, 0.6, 0.5, 0.04],
@@ -720,7 +724,7 @@ def test_backward_elimination_removes_snps():
     n_snps = 4
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.8, 0.01, 0.7, 0.03],  # rs2 and rs4 have tiny effects
@@ -758,7 +762,7 @@ def test_conditional_stats_singular_b1():
     n_snps = 4
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.5, 0.3, 0.2, 0.1],
@@ -789,7 +793,7 @@ def test_joint_stats_singular_xtx():
     n_snps = 4
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.5, 0.3, 0.2, 0.1],
@@ -818,7 +822,7 @@ def test_conditional_stats_infinite_se():
     n_snps = 3
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.5, 0.3, 0.2],
@@ -930,7 +934,7 @@ def test_conditional_selection_backward_removes_during_iteration():
     n_snps = 4
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             # rs1 barely significant, rs2 very significant, rs3/rs4 not significant
@@ -966,7 +970,7 @@ def test_conditional_selection_all_removed_by_backward():
     n_snps = 4
     sumstats = pd.DataFrame(
         {
-            "SNP": [f"rs{i+1}" for i in range(n_snps)],
+            "SNP": [f"rs{i + 1}" for i in range(n_snps)],
             "A1": ["A"] * n_snps,
             "A2": ["G"] * n_snps,
             "b": [0.8, 0.7, 0.01, 0.01],
@@ -993,7 +997,9 @@ def test_conditional_selection_all_removed_by_backward():
             self_ref.backward_removed_snps.add(self_ref.snp_ids[idx])
         self_ref.snps_selected.clear()
 
-    with patch.object(cojo, "_backward_elimination", side_effect=mock_backward_elimination):
+    with patch.object(
+        cojo, "_backward_elimination", side_effect=mock_backward_elimination
+    ):
         result = cojo.conditional_selection()
 
     assert result.empty
