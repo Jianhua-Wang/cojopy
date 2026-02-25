@@ -1147,17 +1147,10 @@ def test_effective_n_negative_warning():
     se = sumstats["se"].values
     freq = sumstats["freq"].values
 
-    import warnings
-
-    with warnings.catch_warnings(record=True):
-        # The warning should be logged, not raised as a Python warning
-        # We check via the logger
-        import logging
-
-        with patch.object(cojo.logger, "warning") as mock_warn:
-            cojo._cal_effective_n(cojo.pheno_var, beta, se, freq)
-            mock_warn.assert_called_once()
-            assert "Negative or zero effective N" in mock_warn.call_args[0][0]
+    with patch.object(cojo.logger, "warning") as mock_warn:
+        cojo._cal_effective_n(cojo.pheno_var, beta, se, freq)
+        mock_warn.assert_called_once()
+        assert "Negative or zero effective N" in mock_warn.call_args[0][0]
 
 
 def test_p_value_never_zero():
