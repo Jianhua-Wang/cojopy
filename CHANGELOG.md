@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.5] (2026-02-25)
+
+* Boosted test coverage from 75% to 99% (cojopy.py 100% line coverage, 26 new tests).
+* Fixed preview workflow: replaced tomllib with regex for Python 3.9 compatibility.
+* Fixed lint and formatting issues in test files.
+
 ## [0.1.4] (2026-02-25)
 
 * Migrated from Poetry to uv with hatchling build backend.
