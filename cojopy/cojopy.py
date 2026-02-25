@@ -420,7 +420,7 @@ class COJO:
             self.logger.debug(f"B2: {D2.diagonal()[i]}")
             self.logger.debug(f"_Nd[j]: {eff_n_unselected[i]}")
             # Calculate p-value
-            if cond_se[idx] < np.inf:
+            if np.isfinite(cond_se[idx]) and cond_se[idx] > 0:
                 cond_p[idx] = self._calculate_p_value(cond_beta[idx], cond_se[idx])
             else:
                 cond_p[idx] = 1.0
@@ -480,7 +480,15 @@ class COJO:
 
         # Calculate standard errors using Equation (12)
         var_joint = self.pheno_var * XTX_inv.diagonal()
-        joint_ses = np.sqrt(var_joint)
+        negative_var_mask = var_joint <= 0
+        if np.any(negative_var_mask):
+            self.logger.warning(
+                "Negative variance detected for %d SNP(s) in joint analysis. "
+                "Setting SE=inf and P=1.0 for affected SNPs.",
+                np.sum(negative_var_mask),
+            )
+        with np.errstate(invalid="ignore"):
+            joint_ses = np.sqrt(var_joint)
 
         self.logger.debug(f"joint_betas: {joint_betas}")
         self.logger.debug(f"joint_ses: {joint_ses}")
@@ -489,8 +497,14 @@ class COJO:
         self.logger.debug(f"_B_N_i.diagonal(): {XTX_inv.diagonal()}")
         self.logger.debug(f"_D_N: {D.diagonal()}")
         self.logger.debug(f"_B_N_i: {XTX_inv}")
-        # Calculate p-values
-        joint_pvals = self._calculate_p_value(joint_betas, joint_ses)
+        # Calculate p-values — guard against NaN/inf SE
+        joint_pvals = np.ones(len(joint_betas))
+        valid_mask = np.isfinite(joint_ses) & (joint_ses > 0)
+        if np.any(valid_mask):
+            joint_pvals[valid_mask] = self._calculate_p_value(
+                joint_betas[valid_mask], joint_ses[valid_mask]
+            )
+        joint_ses[~valid_mask] = np.inf
 
         return joint_betas, joint_ses, joint_pvals
 
@@ -642,7 +656,7 @@ class COJO:
         z_scores = beta / se
         log_sf = norm.logsf(abs(z_scores))
         log_p = np.log(2) + log_sf
-        return np.exp(log_p)
+        return np.maximum(np.exp(log_p), np.finfo(np.float64).tiny)
 
     def _cal_pheno_var(
         self, freq: np.ndarray, beta: np.ndarray, se: np.ndarray, n: np.ndarray
@@ -658,4 +672,9 @@ class COJO:
         """Calculate the effective sample size using Equation (13) from Yang et al. (2012)."""
         var_x = 2 * freq * (1 - freq)
         eff_n = (pheno_var - var_x * beta**2) / (var_x * se**2) + 1
+        if np.any(eff_n <= 0):
+            self.logger.warning(
+                "Negative or zero effective N detected for %d SNP(s).",
+                np.sum(eff_n <= 0),
+            )
         return eff_n

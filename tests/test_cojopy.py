@@ -1045,3 +1045,144 @@ def test_conditional_stats_cond_se_infinite():
     # rs2 should have infinite SE and p = 1.0
     rs2_idx = list(cojo.snp_ids).index("rs2")
     assert cond_p[rs2_idx] == 1.0
+
+
+# ===== NaN P-value bug fix tests =====
+
+
+def test_joint_stats_negative_variance():
+    """Test that negative variance in joint analysis produces P=1.0 instead of NaN.
+
+    When XTX_inv.diagonal() has negative values (from pseudo-inverse or ill-conditioned
+    matrix), var_joint becomes negative → sqrt(negative) = NaN. The fix should
+    set SE=inf and P=1.0 for affected SNPs.
+    """
+    n_snps = 3
+    sumstats = pd.DataFrame(
+        {
+            "SNP": ["rs1", "rs2", "rs3"],
+            "A1": ["A", "C", "G"],
+            "A2": ["G", "T", "A"],
+            "b": [0.5, 0.3, 0.2],
+            "se": [0.1, 0.1, 0.1],
+            "p": [1e-10, 1e-8, 1e-5],
+            "freq": [0.3, 0.4, 0.5],
+            "N": [1000] * n_snps,
+        }
+    )
+    ld = np.eye(n_snps)
+
+    cojo = COJO()
+    cojo.load_sumstats(sumstats=sumstats, ld_matrix=ld)
+    cojo.selected_mask = np.array([True, True, True])
+
+    # Patch np.linalg.inv to return a matrix with negative diagonal elements
+    fake_inv = np.array([[-0.5, 0.1, 0.0], [0.1, 1.0, 0.0], [0.0, 0.0, -0.2]])
+    with patch("numpy.linalg.inv", return_value=fake_inv):
+        joint_betas, joint_ses, joint_pvals = cojo._calculate_joint_stats()
+
+    # SNPs with negative variance (index 0 and 2) should have P=1.0, not NaN
+    assert joint_pvals[0] == 1.0
+    assert joint_pvals[2] == 1.0
+    assert np.isinf(joint_ses[0])
+    assert np.isinf(joint_ses[2])
+    # SNP with positive variance (index 1) should have a real P-value
+    assert np.isfinite(joint_pvals[1])
+    assert joint_pvals[1] < 1.0
+    # No NaN anywhere
+    assert not np.any(np.isnan(joint_pvals))
+    assert not np.any(np.isnan(joint_ses))
+
+
+def test_joint_stats_no_nan_in_output():
+    """End-to-end test: joint analysis output DataFrame must never contain NaN P-values.
+
+    Uses a near-singular LD matrix to provoke ill-conditioned XTX.
+    """
+    n_snps = 3
+    sumstats = pd.DataFrame(
+        {
+            "SNP": ["rs1", "rs2", "rs3"],
+            "A1": ["A", "C", "G"],
+            "A2": ["G", "T", "A"],
+            "b": [0.5, 0.49, 0.2],
+            "se": [0.01, 0.01, 0.1],
+            "p": [1e-50, 1e-49, 1e-5],
+            "freq": [0.3, 0.3, 0.5],
+            "N": [10000] * n_snps,
+        }
+    )
+    # Near-singular LD: rs1 and rs2 are almost identical
+    ld = np.array([[1.0, 0.999, 0.1], [0.999, 1.0, 0.1], [0.1, 0.1, 1.0]])
+
+    cojo = COJO()
+    cojo.load_sumstats(sumstats=sumstats, ld_matrix=ld)
+    result = cojo.run_joint_analysis()
+
+    # No NaN values in any numeric column
+    for col in ["joint_beta", "joint_se", "joint_p"]:
+        assert not result[col].isna().any(), f"NaN found in {col}"
+
+
+def test_effective_n_negative_warning():
+    """Test that _cal_effective_n warns when effective N is negative or zero."""
+    sumstats = pd.DataFrame(
+        {
+            "SNP": ["rs1", "rs2"],
+            "A1": ["A", "C"],
+            "A2": ["G", "T"],
+            "b": [5.0, 0.3],  # Very large beta to force negative eff_n
+            "se": [0.01, 0.1],
+            "p": [1e-10, 1e-5],
+            "freq": [0.3, 0.4],
+            "N": [100, 100],
+        }
+    )
+    ld = np.eye(2)
+
+    cojo = COJO()
+    cojo.load_sumstats(sumstats=sumstats, ld_matrix=ld)
+
+    beta = sumstats["b"].values
+    se = sumstats["se"].values
+    freq = sumstats["freq"].values
+
+    import warnings
+
+    with warnings.catch_warnings(record=True):
+        # The warning should be logged, not raised as a Python warning
+        # We check via the logger
+        import logging
+
+        with patch.object(cojo.logger, "warning") as mock_warn:
+            cojo._cal_effective_n(cojo.pheno_var, beta, se, freq)
+            mock_warn.assert_called_once()
+            assert "Negative or zero effective N" in mock_warn.call_args[0][0]
+
+
+def test_p_value_never_zero():
+    """Test that _calculate_p_value never returns exactly 0.0, even for extreme z-scores."""
+    sumstats = pd.DataFrame(
+        {
+            "SNP": ["rs1"],
+            "A1": ["A"],
+            "A2": ["G"],
+            "b": [0.5],
+            "se": [0.1],
+            "p": [1e-8],
+            "freq": [0.3],
+            "N": [1000],
+        }
+    )
+    ld = np.eye(1)
+
+    cojo = COJO()
+    cojo.load_sumstats(sumstats=sumstats, ld_matrix=ld)
+
+    # z=50 → P would underflow to 0.0 without clamping
+    beta = np.array([5.0, 100.0, 0.5])
+    se = np.array([0.1, 0.1, 0.01])
+    pvals = cojo._calculate_p_value(beta, se)
+
+    assert np.all(pvals > 0), f"P-values must be > 0, got {pvals}"
+    assert np.all(np.isfinite(pvals)), f"P-values must be finite, got {pvals}"
