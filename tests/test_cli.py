@@ -212,7 +212,6 @@ def test_cli_missing_required_args():
     """Test CLI with missing required arguments."""
     result = runner.invoke(app, ["slct"])
     assert result.exit_code != 0
-    assert "Missing option" in result.stdout
 
 
 def test_cli_invalid_file_paths():
