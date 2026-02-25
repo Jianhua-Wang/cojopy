@@ -425,6 +425,34 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#016-2026-02-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.6] (2026-02-25)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.6] (2026-02-25)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#015-2026-02-25" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -558,6 +586,34 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#016-2026-02-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [0.1.6] (2026-02-25)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[0.1.6] (2026-02-25)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#015-2026-02-25" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -677,6 +733,14 @@
 
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<h2 id="016-2026-02-25">[0.1.6] (2026-02-25)<a class="headerlink" href="#016-2026-02-25" title="Permanent link">&para;</a></h2>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fixed NaN (blank) P-values in joint analysis caused by negative variance from ill-conditioned matrix.</li>
+<li>Fixed P-value underflow to <code>0.0</code> for extremely significant SNPs (clamped to <code>~2.2e-308</code>).</li>
+<li>Hardened conditional stats SE check with explicit <code>np.isfinite</code> guard.</li>
+<li>Added warning for negative or zero effective sample sizes.</li>
+</ul>
 <h2 id="015-2026-02-25">[0.1.5] (2026-02-25)<a class="headerlink" href="#015-2026-02-25" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Boosted test coverage from 75% to 99% (cojopy.py 100% line coverage, 26 new tests).</li>
