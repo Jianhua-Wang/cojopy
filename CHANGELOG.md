@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.6] (2026-02-25)
+
+### Fixed
+
+* Fixed NaN (blank) P-values in joint analysis caused by negative variance from ill-conditioned matrix.
+* Fixed P-value underflow to `0.0` for extremely significant SNPs (clamped to `~2.2e-308`).
+* Hardened conditional stats SE check with explicit `np.isfinite` guard.
+* Added warning for negative or zero effective sample sizes.
+
 ## [0.1.5] (2026-02-25)
 
 * Boosted test coverage from 75% to 99% (cojopy.py 100% line coverage, 26 new tests).
