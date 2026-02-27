@@ -7,6 +7,7 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Usage: usage.md
+  - Methodology: methodology.md
   - Modules: api.md
   - Contributing: contributing.md
   - Changelog: changelog.md
@@ -33,7 +34,8 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist
-  - admonition
+  - pymdownx.arithmatex:
+      generic: true
   - toc:
       # baselevel: 2
       permalink: true
@@ -62,6 +64,9 @@ extra:
   social:
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 # uncomment the following and put your google tracking id below to enable GA
 #google_analytics:
   #- UA-xxx
