@@ -13,10 +13,18 @@ Conditional Analysis with LD Matrix
 
 Get the same results as [GCTA COJO](https://yanglab.westlake.edu.cn/software/gcta/#COJO), but with LD matrix.
 
+* [Documentation](https://Jianhua-Wang.github.io/cojopy)
+
 ## Installation
 
 ```bash
 pip install cojopy
+```
+
+or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv pip install cojopy
 ```
 
 ## Usage

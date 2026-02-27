@@ -1,73 +1,102 @@
 site_name: cojopy
 site_url: https://Jianhua-Wang.github.io/cojopy
+site_description: Conditional & Joint analysis with LD matrix — a Python re-implementation of GCTA-COJO
 repo_url: https://github.com/Jianhua-Wang/cojopy
 repo_name: Jianhua-Wang/cojopy
-#strict: true
+
 nav:
   - Home: index.md
-  - Installation: installation.md
-  - Usage: usage.md
   - Methodology: methodology.md
-  - Modules: api.md
-  - Contributing: contributing.md
-  - Changelog: changelog.md
+  - Validation: validation.md
+
 theme:
   name: material
   language: en
-  #logo: assets/logo.png
+  icon:
+    repo: fontawesome/brands/github
   palette:
-    scheme: preference
-    primary: indigo
-    accent: indigo
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
   features:
     - navigation.indexes
-    - navigation.instant
-    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.emoji
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.magiclink
   - pymdownx.snippets:
       check_paths: true
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.tasklist
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.mark
+  - attr_list
+  - md_in_html
   - toc:
-      # baselevel: 2
       permalink: true
-      # slugify: !!python/name:pymdownx.slugs.uslugify
   - meta
+
 plugins:
   - include-markdown
   - search:
       lang: en
   - mkdocstrings:
       handlers:
-      python:
-        import:
-        - https://docs.python.org/3/objects.inv
-        - https://installer.readthedocs.io/en/stable/objects.inv  # demonstration purpose in the docs
-        - https://mkdocstrings.github.io/autorefs/objects.inv
-        options:
-          docstring_style: numpy
-          docstring_options:
-            ignore_init_summary: yes
-          merge_init_into_class: yes
-          show_submodules: yes
-      # watch:
-      #   - cojopy
+        python:
+          inventories:
+            - https://docs.python.org/3/objects.inv
+            - https://installer.readthedocs.io/en/stable/objects.inv
+            - https://mkdocstrings.github.io/autorefs/objects.inv
+          options:
+            docstring_style: numpy
+            docstring_options:
+              ignore_init_summary: yes
+            merge_init_into_class: yes
+            show_submodules: yes
+
 extra:
   social:
-  # to enable disqus, uncomment the following and put your disqus id below
-  # disqus: disqus_id
+    - icon: fontawesome/brands/github
+      link: https://github.com/Jianhua-Wang/cojopy
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/cojopy/
+
 extra_javascript:
   - javascripts/mathjax.js
-  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
-# uncomment the following and put your google tracking id below to enable GA
-#google_analytics:
-  #- UA-xxx
-  #- auto
+  - path: https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+    async: true
