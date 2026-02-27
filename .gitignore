@@ -116,3 +116,8 @@ site/
 CLAUDE.local.md
 
 .claude/
+
+# Simulation outputs
+simulation/bin/
+simulation/output/
+simulation/output_external_ld/
