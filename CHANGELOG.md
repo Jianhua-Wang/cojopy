@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.0] (2026-02-27)
+
+### Added
+
+* Methodology documentation with full COJO formula derivations (Yang et al. 2012).
+* Simulation validation against GCTA-COJO with end-to-end reproducibility.
+* Documentation link and uv install option in README.
+* MathJax support for LaTeX formula rendering in docs.
+
+### Changed
+
+* Enhanced MkDocs theme: dark/light toggle, Inter/JetBrains Mono fonts, code copy, footer navigation, search suggestions.
+* Simplified docs navigation to Home / Methodology / Validation.
+* Removed Windows from CI matrix.
+* Removed redundant preview workflow.
+
+### Fixed
+
+* Removed unreachable dead branch in collinearity check.
+* Achieved 100% branch coverage (92/92 branches).
+
 ## [0.1.6] (2026-02-25)
 
 ### Fixed
