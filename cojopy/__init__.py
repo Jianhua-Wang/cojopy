@@ -8,7 +8,7 @@ from .cojopy import COJO
 
 __author__ = """Jianhua Wang"""
 __email__ = "jianhua.mert@gmail.com"
-__version__ = "0.1.6"
+__version__ = "1.0.0"
 
 
 logging.basicConfig(
