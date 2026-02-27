@@ -1124,6 +1124,43 @@ def test_joint_stats_no_nan_in_output():
         assert not result[col].isna().any(), f"NaN found in {col}"
 
 
+def test_joint_stats_all_invalid_se():
+    """Test joint analysis when all SEs are invalid (branch 503->507).
+
+    When XTX_inv has all negative diagonal entries, all joint variances are
+    negative, producing NaN SEs. The valid_mask is all-False, so the
+    ``if np.any(valid_mask)`` branch is skipped entirely.
+    """
+    n_snps = 2
+    sumstats = pd.DataFrame(
+        {
+            "SNP": ["rs1", "rs2"],
+            "A1": ["A", "C"],
+            "A2": ["G", "T"],
+            "b": [0.5, 0.3],
+            "se": [0.1, 0.1],
+            "p": [1e-10, 1e-8],
+            "freq": [0.3, 0.4],
+            "N": [1000, 1000],
+        }
+    )
+    ld = np.eye(n_snps)
+
+    cojo = COJO()
+    cojo.load_sumstats(sumstats=sumstats, ld_matrix=ld)
+    cojo.selected_mask = np.array([True, True])
+
+    # All diagonal entries negative → all variances negative → all SEs NaN
+    fake_inv = np.array([[-1.0, 0.0], [0.0, -1.0]])
+    with patch("numpy.linalg.inv", return_value=fake_inv):
+        joint_betas, joint_ses, joint_pvals = cojo._calculate_joint_stats()
+
+    # All P-values should be 1.0, all SEs should be inf
+    assert np.all(joint_pvals == 1.0)
+    assert np.all(np.isinf(joint_ses))
+    assert not np.any(np.isnan(joint_pvals))
+
+
 def test_effective_n_negative_warning():
     """Test that _cal_effective_n warns when effective N is negative or zero."""
     sumstats = pd.DataFrame(

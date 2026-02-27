@@ -604,14 +604,13 @@ class COJO:
             ld_subset = self.ld_matrix[new_snp_idx, selected_indices_in_window]
             max_r2 = np.max(ld_subset**2)
 
-            if len(selected_indices_in_window) > 0:
-                max_r2_idx = selected_indices_in_window[np.argmax(ld_subset**2)]
-                self.logger.debug(
-                    "Max r² = %g with SNP %s (within %d bp window)",
-                    max_r2,
-                    self.snp_ids[max_r2_idx],
-                    self.window_size,
-                )
+            max_r2_idx = selected_indices_in_window[np.argmax(ld_subset**2)]
+            self.logger.debug(
+                "Max r² = %g with SNP %s (within %d bp window)",
+                max_r2,
+                self.snp_ids[max_r2_idx],
+                self.window_size,
+            )
         else:
             # Check all selected SNPs
             ld_subset = self.ld_matrix[new_snp_idx, selected_indices]
